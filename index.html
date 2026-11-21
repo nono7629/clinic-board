@@ -34,12 +34,14 @@
 
   .header { display: flex; align-items: center; justify-content: space-between;
             padding: 14px 16px; background: var(--card); border-bottom: 1px solid var(--border);
-            position: sticky; top: 0; z-index: 20; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+            position: sticky; top: 0; z-index: 20; box-shadow: 0 1px 2px rgba(0,0,0,0.03); gap: 8px; }
   .header .nav-btn { background: var(--bg); border: 1px solid var(--border);
-                     border-radius: 8px; padding: 7px 14px; font-size: 14px;
-                     color: var(--text); cursor: pointer; font-weight: 600; }
+                     border-radius: 8px; padding: 7px 12px; font-size: 14px;
+                     color: var(--text); cursor: pointer; font-weight: 600; flex-shrink: 0; }
   .header .nav-btn:active { background: var(--border); }
-  .month-title { font-size: 17px; font-weight: 700; min-width: 120px; text-align: center; }
+  .header .refresh-btn { color: var(--accent); }
+  .header .nav-controls { display: flex; align-items: center; gap: 6px; }
+  .month-title { font-size: 17px; font-weight: 700; min-width: 110px; text-align: center; }
   .hospital-sub { font-size: 12px; color: var(--muted); text-align: center; margin-top: 2px; }
 
   .legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--muted); padding: 10px 12px 6px; }
@@ -47,7 +49,7 @@
   .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
   .dot-red { background: var(--red); }
   .dot-orange { background: var(--orange); }
-  .dot-green { background: var(--green); }
+  .dot-yellow { background: var(--yellow); }
   .dot-blue { background: var(--blue); }
 
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr);
@@ -95,20 +97,56 @@
     <div class="month-title" id="monthTitle"></div>
     <div class="hospital-sub">🏥 國軍臺中總醫院中清分院 門診異動</div>
   </div>
-  <button class="nav-btn" onclick="navMonth(1)">下月 ▶</button>
+  <div class="nav-controls">
+    <button class="nav-btn" onclick="navMonth(1)">下月 ▶</button>
+    <button class="nav-btn refresh-btn" onclick="location.reload()" title="重新整理">🔄 刷新</button>
+  </div>
 </div>
 
 <div class="legend">
-  <span><i class="dot dot-orange"></i> 上午停診</span>
-  <span><i class="dot dot-red"></i> 全天停診</span>
-  <span><i class="dot dot-green"></i> 正常開診</span>
+  <span><i class="dot dot-red"></i> 停診</span>
+  <span><i class="dot dot-yellow"></i> 只看預約病人</span>
   <span><i class="dot dot-blue"></i> 代診</span>
 </div>
 
 <div class="cal-grid" id="calGrid"></div>
 
 <script id="clinic-data" type="application/json">
-[]
+[
+  {
+    "id": 1,
+    "department": "家醫科",
+    "doctor_name": "陳柏臣",
+    "session": "MORNING",
+    "change_date": "2026-11-01",
+    "change_type": "SUSPENDED"
+  },
+  {
+    "id": 2,
+    "department": "家醫科",
+    "doctor_name": "陳柏臣",
+    "session": "MORNING",
+    "change_date": "2026-11-03",
+    "change_type": "SUSPENDED"
+  },
+  {
+    "id": 3,
+    "department": "家醫科",
+    "doctor_name": "陳柏臣",
+    "session": "MORNING",
+    "change_date": "2026-11-07",
+    "change_type": "SUSPENDED"
+  },
+  {
+    "id": 5,
+    "department": "外科",
+    "doctor_name": "李醫師",
+    "session": "AFTERNOON",
+    "change_date": "2026-11-15",
+    "change_type": "SUBSTITUTE",
+    "substitute_doctor": "王醫師"
+  }
+]
 </script>
 
 <script>
@@ -125,9 +163,6 @@ function initData() {
 }
 
 function getBadgeInfo(c) {
-  if (c.change_type === 'RESUMED') {
-    return { cls: 'badge-green', text: `${c.doctor_name} 正常` };
-  }
   if (c.change_type === 'SUBSTITUTE') {
     const sub = c.substitute_doctor ? `(${c.substitute_doctor}代)` : '代診';
     return { cls: 'badge-blue', text: `${c.doctor_name} ${sub}` };
@@ -171,7 +206,7 @@ function renderMonth(y, m) {
     cell.className = 'cal-cell' + (dateStr === today ? ' today' : '');
     cell.innerHTML = `<div class="cal-num">${d}</div>`;
 
-    const dayItems = allChanges.filter(c => c.change_date === dateStr);
+    const dayItems = allChanges.filter(c => c.change_date === dateStr && c.change_type !== 'RESUMED');
     if (dayItems.length > 0) {
       const list = document.createElement('div');
       list.className = 'badge-list';
