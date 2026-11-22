@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>門診異動看板 - 國軍臺中總醫院中清分院</title>
+<style>
+  :root {
+    --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --muted: #64748b;
+    --red: #ef4444; --orange: #f97316; --yellow: #eab308; --blue: #3b82f6; --green: #22c55e;
+    --border: #e2e8f0; --today-bg: #eff6ff; --accent: #2563eb;
+    --badge-red-bg: #fee2e2; --badge-red-text: #991b1b;
+    --badge-orange-bg: #ffedd5; --badge-orange-text: #9a3412;
+    --badge-yellow-bg: #fef9c3; --badge-yellow-text: #854d0e;
+    --badge-green-bg: #dcfce7; --badge-green-text: #166534;
+    --badge-blue-bg: #dbeafe; --badge-blue-text: #1e40af;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --muted: #94a3b8;
+      --border: #334155; --today-bg: #1e3a5f; --accent: #60a5fa;
+      --badge-red-bg: #451a1a; --badge-red-text: #fca5a5;
+      --badge-orange-bg: #431407; --badge-orange-text: #fdba74;
+      --badge-yellow-bg: #422006; --badge-yellow-text: #fde047;
+      --badge-green-bg: #052e16; --badge-green-text: #86efac;
+      --badge-blue-bg: #172554; --badge-blue-text: #93c5fd;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+         background: var(--bg); color: var(--text); min-height: 100dvh; padding-bottom: 24px; }
+
+  .header { display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 16px; background: var(--card); border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; z-index: 20; box-shadow: 0 1px 2px rgba(0,0,0,0.03); gap: 8px; }
+  .header .nav-btn { background: var(--bg); border: 1px solid var(--border);
+                     border-radius: 8px; padding: 7px 12px; font-size: 14px;
+                     color: var(--text); cursor: pointer; font-weight: 600; flex-shrink: 0; }
+  .header .nav-btn:active { background: var(--border); }
+  .header .refresh-btn { color: var(--accent); }
+  .header .nav-controls { display: flex; align-items: center; gap: 6px; }
+  .month-title { font-size: 17px; font-weight: 700; min-width: 110px; text-align: center; }
+  .hospital-sub { font-size: 12px; color: var(--muted); text-align: center; margin-top: 2px; }
+
+  .legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--muted); padding: 10px 12px 6px; }
+  .legend span { display: flex; align-items: center; gap: 4px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .dot-red { background: var(--red); }
+  .dot-orange { background: var(--orange); }
+  .dot-yellow { background: var(--yellow); }
+  .dot-blue { background: var(--blue); }
+
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr);
+              gap: 1px; background: var(--border); margin: 8px 10px 16px; border-radius: 12px;
+              overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
+  .cal-head { background: var(--card); text-align: center; font-size: 12px;
+              padding: 8px 0; color: var(--muted); font-weight: 700; }
+  .cal-cell { background: var(--card); min-height: 72px; padding: 4px 3px;
+              position: relative; display: flex; flex-direction: column; }
+  .cal-cell.empty { background: var(--bg); }
+  .cal-cell.today { background: var(--today-bg); }
+  .cal-num { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+  .cal-cell.today .cal-num { color: var(--accent); }
+
+  .badge-list { display: flex; flex-direction: column; gap: 2px; width: 100%; overflow: hidden; }
+  .cal-badge {
+    font-size: 10.5px;
+    padding: 2px 3px;
+    border-radius: 4px;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    font-weight: 600;
+  }
+  .badge-red { background: var(--badge-red-bg); color: var(--badge-red-text); }
+  .badge-orange { background: var(--badge-orange-bg); color: var(--badge-orange-text); }
+  .badge-yellow { background: var(--badge-yellow-bg); color: var(--badge-yellow-text); }
+  .badge-green { background: var(--badge-green-bg); color: var(--badge-green-text); }
+  .badge-blue { background: var(--badge-blue-bg); color: var(--badge-blue-text); }
+
+  @media (max-width: 480px) {
+    .cal-cell { min-height: 68px; padding: 3px 2px; }
+    .cal-num { font-size: 12px; }
+    .cal-badge { font-size: 9.5px; padding: 1.5px 2px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <button class="nav-btn" onclick="navMonth(-1)">◀ 上月</button>
+  <div>
+    <div class="month-title" id="monthTitle"></div>
+    <div class="hospital-sub">🏥 國軍臺中總醫院中清分院 門診異動</div>
+  </div>
+  <div class="nav-controls">
+    <button class="nav-btn" onclick="navMonth(1)">下月 ▶</button>
+    <button class="nav-btn refresh-btn" onclick="location.reload()" title="重新整理">🔄 刷新</button>
+  </div>
+</div>
+
+<div class="legend">
+  <span><i class="dot dot-red"></i> 停診</span>
+  <span><i class="dot dot-yellow"></i> 只看預約病人</span>
+  <span><i class="dot dot-blue"></i> 代診</span>
+</div>
+
+<div class="cal-grid" id="calGrid"></div>
+
+<script id="clinic-data" type="application/json">
+[]
+</script>
+
+<script>
+const WEEKDAYS = ['日','一','二','三','四','五','六'];
+let currentYear, currentMonth, allChanges = [];
+
+function initData() {
+  try {
+    const raw = document.getElementById('clinic-data').textContent;
+    allChanges = JSON.parse(raw);
+  } catch (e) {
+    allChanges = [];
+  }
+}
+
+function getBadgeInfo(c) {
+  if (c.change_type === 'SUBSTITUTE') {
+    const sub = c.substitute_doctor ? `(${c.substitute_doctor}代)` : '代診';
+    return { cls: 'badge-blue', text: `${c.doctor_name} ${sub}` };
+  }
+  if (c.change_type === 'APPOINTMENT_ONLY') {
+    return { cls: 'badge-yellow', text: `${c.doctor_name} 僅預約` };
+  }
+  if (c.session === 'MORNING') {
+    return { cls: 'badge-orange', text: `${c.doctor_name} 上午停` };
+  }
+  if (c.session === 'AFTERNOON') {
+    return { cls: 'badge-yellow', text: `${c.doctor_name} 下午停` };
+  }
+  return { cls: 'badge-red', text: `${c.doctor_name} 停診` };
+}
+
+function renderMonth(y, m) {
+  currentYear = y; currentMonth = m;
+  document.getElementById('monthTitle').textContent = `${y} 年 ${m} 月`;
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+
+  WEEKDAYS.forEach(w => {
+    const h = document.createElement('div');
+    h.className = 'cal-head'; h.textContent = w; grid.appendChild(h);
+  });
+
+  const firstDay = new Date(y, m - 1, 1).getDay();
+  const totalDays = new Date(y, m, 0).getDate();
+  const today = new Date().toISOString().slice(0, 10);
+
+  for (let i = 0; i < firstDay; i++) {
+    const empty = document.createElement('div');
+    empty.className = 'cal-cell empty';
+    grid.appendChild(empty);
+  }
+
+  for (let d = 1; d <= totalDays; d++) {
+    const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell' + (dateStr === today ? ' today' : '');
+    cell.innerHTML = `<div class="cal-num">${d}</div>`;
+
+    const dayItems = allChanges.filter(c => c.change_date === dateStr && c.change_type !== 'RESUMED');
+    if (dayItems.length > 0) {
+      const list = document.createElement('div');
+      list.className = 'badge-list';
+      dayItems.forEach(item => {
+        const info = getBadgeInfo(item);
+        const b = document.createElement('div');
+        b.className = `cal-badge ${info.cls}`;
+        b.textContent = info.text;
+        b.title = `${item.department || ''} ${item.doctor_name}`;
+        list.appendChild(b);
+      });
+      cell.appendChild(list);
+    }
+
+    grid.appendChild(cell);
+  }
+}
+
+function navMonth(delta) {
+  let m = currentMonth + delta, y = currentYear;
+  if (m < 1) { m = 12; y--; } else if (m > 12) { m = 1; y++; }
+  renderMonth(y, m);
+}
+
+initData();
+const now = new Date();
+renderMonth(now.getFullYear(), now.getMonth() + 1);
+</script>
+</body>
+</html>
