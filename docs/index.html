@@ -65,8 +65,34 @@
               position: relative; display: flex; flex-direction: column; gap: 5px; }
   .cal-cell.empty { background: var(--bg); min-height: 50px; }
   .cal-cell.today { background: var(--today-bg); }
-  .cal-num { font-size: 16px; font-weight: 800; line-height: 1.2; margin-bottom: 2px; }
+  .cal-day-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2px;
+    gap: 2px;
+  }
+  .cal-num { font-size: 16px; font-weight: 800; line-height: 1.2; }
+  .cal-num.holiday { color: #e11d48; }
   .cal-cell.today .cal-num { color: var(--accent); font-weight: 900; }
+
+  .holiday-tag {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #e11d48;
+    background: rgba(225, 29, 72, 0.08);
+    padding: 1px 3px;
+    border-radius: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 65px;
+    line-height: 1.2;
+  }
+  [data-theme="dark"] .holiday-tag {
+    color: #fda4af;
+    background: rgba(225, 29, 72, 0.22);
+  }
 
   .session-group {
     display: flex;
@@ -109,7 +135,9 @@
     .cal-grid { margin: 4px 0 16px; border-radius: 0; box-shadow: none; width: 100%; }
     .cal-cell { min-height: 85px; padding: 3px 2px; gap: 3px; }
     .cal-head { font-size: 13px; padding: 8px 0; }
+    .cal-day-header { margin-bottom: 1px; gap: 1px; }
     .cal-num { font-size: 13.5px; }
+    .holiday-tag { font-size: 8.5px; padding: 0.5px 2px; max-width: 42px; border-radius: 3px; }
     .session-header { font-size: 9.5px; padding: 1px 3px; }
     .cal-badge { font-size: 11px; padding: 2px 3px; line-height: 1.2; }
     .month-title { font-size: 18px; min-width: 100px; }
@@ -152,6 +180,57 @@
 <script>
 const WEEKDAYS = ['一','二','三','四','五','六','日'];
 let currentYear, currentMonth, allChanges = [];
+
+const HOLIDAYS = {
+  // 115年 (2026年) 行政院辦公日曆表國定假日與連假
+  "2026-01-01": "元旦",
+  "2026-02-15": "小年夜",
+  "2026-02-16": "除夕",
+  "2026-02-17": "春節",
+  "2026-02-18": "初二",
+  "2026-02-19": "初三",
+  "2026-02-20": "春節補假",
+  "2026-02-27": "228補假",
+  "2026-02-28": "和平紀念日",
+  "2026-04-03": "兒童節補假",
+  "2026-04-04": "兒童節",
+  "2026-04-05": "清明節",
+  "2026-04-06": "清明補假",
+  "2026-05-01": "勞動節",
+  "2026-06-19": "端午節",
+  "2026-09-25": "中秋節",
+  "2026-09-28": "教師節",
+  "2026-10-09": "國慶補假",
+  "2026-10-10": "國慶日",
+  "2026-10-25": "臺灣光復節",
+  "2026-10-26": "光復節補假",
+  "2026-12-25": "行憲紀念日",
+  // 116年 (2027年) 行政院辦公日曆表國定假日與連假
+  "2027-01-01": "元旦",
+  "2027-02-04": "小年夜",
+  "2027-02-05": "除夕",
+  "2027-02-06": "春節",
+  "2027-02-07": "初二",
+  "2027-02-08": "初三",
+  "2027-02-09": "春節補假",
+  "2027-02-10": "春節補假",
+  "2027-02-28": "和平紀念日",
+  "2027-03-01": "228補假",
+  "2027-04-04": "兒童節",
+  "2027-04-05": "清明節",
+  "2027-04-06": "兒童節補假",
+  "2027-04-30": "勞動節補假",
+  "2027-05-01": "勞動節",
+  "2027-06-09": "端午節",
+  "2027-09-15": "中秋節",
+  "2027-09-28": "教師節",
+  "2027-10-10": "國慶日",
+  "2027-10-11": "國慶補假",
+  "2027-10-25": "臺灣光復節",
+  "2027-12-24": "行憲補假",
+  "2027-12-25": "行憲紀念日",
+  "2027-12-31": "元旦補假"
+};
 
 function applyTheme(theme) {
   const t = theme === 'dark' ? 'dark' : 'light';
@@ -227,7 +306,12 @@ function renderMonth(y, m) {
     const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const cell = document.createElement('div');
     cell.className = 'cal-cell' + (dateStr === today ? ' today' : '');
-    cell.innerHTML = `<div class="cal-num">${d}</div>`;
+    const holidayName = HOLIDAYS[dateStr] || '';
+    const dayDate = new Date(y, m - 1, d);
+    const dayOfWeek = dayDate.getDay();
+    const isHoliday = Boolean(holidayName) || dayOfWeek === 0 || dayOfWeek === 6;
+    const holidayHtml = holidayName ? `<span class="holiday-tag" title="${holidayName}">${holidayName}</span>` : '';
+    cell.innerHTML = `<div class="cal-day-header"><span class="cal-num ${isHoliday ? 'holiday' : ''}">${d}</span>${holidayHtml}</div>`;
 
     const dayItems = allChanges.filter(c => c.change_date === dateStr && c.change_type !== 'RESUMED');
     if (dayItems.length > 0) {
