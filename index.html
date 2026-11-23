@@ -14,6 +14,7 @@
     --badge-red-bg: #fee2e2; --badge-red-text: #991b1b; --badge-red-border: #f87171;
     --badge-yellow-bg: #fef9c3; --badge-yellow-text: #854d0e; --badge-yellow-border: #facc15;
     --badge-blue-bg: #dbeafe; --badge-blue-text: #1e40af; --badge-blue-border: #60a5fa;
+    --badge-green-bg: #dcfce7; --badge-green-text: #166534; --badge-green-border: #4ade80;
     --slot-am-bg: #fff7ed; --slot-am-text: #c2410c; --slot-am-border: #ffedd5;
     --slot-pm-bg: #f0fdf4; --slot-pm-text: #15803d; --slot-pm-border: #dcfce7;
     --slot-night-bg: #faf5ff; --slot-night-text: #7e22ce; --slot-night-border: #f3e8ff;
@@ -24,6 +25,7 @@
     --badge-red-bg: #451a1a; --badge-red-text: #fca5a5; --badge-red-border: #991b1b;
     --badge-yellow-bg: #422006; --badge-yellow-text: #fde047; --badge-yellow-border: #854d0e;
     --badge-blue-bg: #172554; --badge-blue-text: #93c5fd; --badge-blue-border: #1e40af;
+    --badge-green-bg: #052e16; --badge-green-text: #86efac; --badge-green-border: #166534;
     --slot-am-bg: #431407; --slot-am-text: #fdba74; --slot-am-border: #7c2d12;
     --slot-pm-bg: #052e16; --slot-pm-text: #86efac; --slot-pm-border: #14532d;
     --slot-night-bg: #3b0764; --slot-night-text: #d8b4fe; --slot-night-border: #581c87;
@@ -128,6 +130,7 @@
   .badge-red { background: var(--badge-red-bg); color: var(--badge-red-text); border-left-color: var(--badge-red-border); }
   .badge-yellow { background: var(--badge-yellow-bg); color: var(--badge-yellow-text); border-left-color: var(--badge-yellow-border); }
   .badge-blue { background: var(--badge-blue-bg); color: var(--badge-blue-text); border-left-color: var(--badge-blue-border); }
+  .badge-green { background: var(--badge-green-bg); color: var(--badge-green-text); border-left-color: var(--badge-green-border); }
 
   @media (max-width: 600px) {
     body { padding-bottom: 20px; }
@@ -177,7 +180,7 @@
 [
   {
     "id": 29,
-    "record_id": "20261123T014847Z_m744_accd40",
+    "record_id": "20261123T071906Z_m752_e79517",
     "hospital": "國軍臺中總醫院中清分院",
     "department": "皮膚科",
     "doctor_name": "葉惠如",
@@ -193,10 +196,10 @@
     "change_description": "115年11月23日下午門診暫停乙次。",
     "substitute_doctor": null,
     "contact_phone": "04-22033178#525030",
-    "drive_file_url": "https://drive.google.com/file/d/1yXY4OSx-OHJ1--CtAkMh_JwOCLYQXCdz/view?usp=drivesdk",
+    "drive_file_url": "https://drive.google.com/file/d/19j-HHQmV4_po-3Ri8Th52wP5WgazIHmJ/view?usp=drivesdk",
     "is_active": 1,
     "created_at": "2026-11-23T01:48:56.794385+00:00",
-    "updated_at": "2026-11-23T01:48:56.794385+00:00"
+    "updated_at": "2026-11-23T07:19:15.976668+00:00"
   },
   {
     "id": 27,
@@ -345,6 +348,12 @@ function getBadgeInfo(c) {
   if (c.change_type === 'APPOINTMENT_ONLY') {
     return { cls: 'badge-yellow', text: `${dept}${c.doctor_name} 僅預約` };
   }
+  if (c.change_type === 'ADDED') {
+    return { cls: 'badge-green', text: `${dept}${c.doctor_name} 加開` };
+  }
+  if (c.change_type === 'OTHER') {
+    return { cls: 'badge-blue', text: `${dept}${c.doctor_name} 異動` };
+  }
   return { cls: 'badge-red', text: `${dept}${c.doctor_name} 停診` };
 }
 
@@ -364,7 +373,8 @@ function renderMonth(y, m) {
   const firstDay = new Date(y, m - 1, 1).getDay();
   const leadingEmpty = (firstDay + 6) % 7;
   const totalDays = new Date(y, m, 0).getDate();
-  const today = new Date().toISOString().slice(0, 10);
+  const todayDt = new Date();
+  const today = `${todayDt.getFullYear()}-${String(todayDt.getMonth() + 1).padStart(2,'0')}-${String(todayDt.getDate()).padStart(2,'0')}`;
 
   for (let i = 0; i < leadingEmpty; i++) {
     const empty = document.createElement('div');
